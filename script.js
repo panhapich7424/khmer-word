@@ -558,7 +558,7 @@ class KhmerWordGame {
         this.nextWord();
     }
 
-    backToMenu() {
+    async backToMenu() {
         this.clearTimer();
         this.gameBoard.style.display = 'none';
         this.mainMenu.style.display = 'block';
@@ -568,7 +568,13 @@ class KhmerWordGame {
         this.selectedPiece = null;
         this.currentRound = 0;
         this.updateScore();
-        this.displayMenuLeaderboard();
+        
+        // Refresh leaderboard when returning to menu
+        if (this.firestoreService) {
+            await this.loadLeaderboard();
+        } else {
+            this.displayMenuLeaderboard();
+        }
     }
 
     // How to play modal
@@ -617,6 +623,11 @@ class KhmerWordGame {
                 console.log('Real-time update: received', scores.length, 'scores');
                 this.leaderboard = scores;
                 this.displayMenuLeaderboard();
+                
+                // Also update the modal leaderboard if it's open
+                if (this.leaderboardModal.style.display === 'flex') {
+                    this.displayLeaderboard();
+                }
             });
         }
     }
@@ -714,7 +725,13 @@ class KhmerWordGame {
                 console.log('Saving score to Firebase:', scoreData);
                 await this.firestoreService.saveScore(scoreData);
                 console.log('Score saved to Firebase successfully');
-                // Don't update local leaderboard - let Firebase listener handle it
+                
+                // Manually refresh leaderboard after saving
+                console.log('Refreshing leaderboard after save...');
+                setTimeout(async () => {
+                    await this.loadLeaderboard();
+                }, 1000); // Wait 1 second for Firebase to process
+                
             } else {
                 // Fallback to localStorage
                 console.log('Saving score to localStorage:', scoreData);
@@ -746,7 +763,13 @@ class KhmerWordGame {
         this.playerName.value = '';
     }
 
-    showLeaderboard() {
+    async showLeaderboard() {
+        // Refresh leaderboard data before showing
+        if (this.firestoreService) {
+            console.log('Refreshing leaderboard before showing modal...');
+            await this.loadLeaderboard();
+        }
+        
         this.displayLeaderboard();
         this.leaderboardModal.style.display = 'flex';
     }
@@ -849,6 +872,31 @@ class KhmerWordGame {
         localStorage.removeItem('khmerWordGameLeaderboard');
         console.log('localStorage cleared');
         this.loadLeaderboard();
+    }
+
+    // Force refresh leaderboard from Firebase
+    async forceRefreshLeaderboard() {
+        console.log('Force refreshing leaderboard...');
+        if (this.firestoreService) {
+            try {
+                this.leaderboard = await this.firestoreService.getTopScores(10);
+                console.log('Force refresh: loaded', this.leaderboard.length, 'scores');
+                this.displayMenuLeaderboard();
+                
+                // Also update modal if open
+                if (this.leaderboardModal.style.display === 'flex') {
+                    this.displayLeaderboard();
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Force refresh failed:', error);
+                return false;
+            }
+        } else {
+            console.log('No Firebase service available');
+            return false;
+        }
     }
 
     // Cleanup Firebase listener when needed

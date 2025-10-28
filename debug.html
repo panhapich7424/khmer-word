@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Debug Panel</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .debug-panel {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .debug-btn {
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .debug-btn:hover {
+            background: #00cc00;
+        }
+        .log {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Firebase Debug Panel</h1>
+    
+    <div class="debug-panel">
+        <h3>Firebase Connection Tests</h3>
+        <button class="debug-btn" onclick="testFirebase()">Test Firebase Connection</button>
+        <button class="debug-btn" onclick="loadLeaderboard()">Load Leaderboard</button>
+        <button class="debug-btn" onclick="forceRefresh()">Force Refresh</button>
+        <button class="debug-btn" onclick="clearStorage()">Clear localStorage</button>
+    </div>
+
+    <div class="debug-panel">
+        <h3>Leaderboard Actions</h3>
+        <button class="debug-btn" onclick="addTestScore()">Add Test Score</button>
+        <button class="debug-btn" onclick="showCurrentData()">Show Current Data</button>
+        <button class="debug-btn" onclick="checkFirestore()">Check Firestore Console</button>
+    </div>
+
+    <div class="debug-panel">
+        <h3>Debug Log</h3>
+        <div id="debugLog" class="log"></div>
+        <button class="debug-btn" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <!-- Include your game files -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        let debugGame;
+        let logElement = document.getElementById('debugLog');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            logElement.innerHTML = '';
+        }
+
+        async function testFirebase() {
+            log('Testing Firebase connection...', 'info');
+            
+            try {
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK not loaded');
+                }
+                
+                if (typeof FirestoreService === 'undefined') {
+                    throw new Error('FirestoreService not available');
+                }
+                
+                const service = new FirestoreService();
+                const scores = await service.getTopScores(1);
+                
+                log(`✅ Firebase connected! Found ${scores.length} scores`, 'success');
+                return true;
+            } catch (error) {
+                log(`❌ Firebase test failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function loadLeaderboard() {
+            log('Loading leaderboard from Firebase...', 'info');
+            
+            try {
+                const service = new FirestoreService();
+                const scores = await service.getTopScores(10);
+                
+                log(`📊 Loaded ${scores.length} scores:`, 'success');
+                scores.forEach((score, index) => {
+                    log(`  ${index + 1}. ${score.name}: ${score.score} points (${score.round} words)`, 'info');
+                });
+                
+                return scores;
+            } catch (error) {
+                log(`❌ Failed to load leaderboard: ${error.message}`, 'error');
+                return [];
+            }
+        }
+
+        async function forceRefresh() {
+            log('Force refreshing leaderboard...', 'warning');
+            await loadLeaderboard();
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('khmerWordGameLeaderboard');
+            log('🗑️ localStorage cleared', 'warning');
+        }
+
+        async function addTestScore() {
+            log('Adding test score...', 'info');
+            
+            try {
+                const service = new FirestoreService();
+                const testScore = {
+                    name: `Test Player ${Date.now()}`,
+                    score: Math.floor(Math.random() * 1000) + 500,
+                    round: Math.floor(Math.random() * 50) + 10,
+                    date: new Date().toLocaleDateString('km-KH')
+                };
+                
+                await service.saveScore(testScore);
+                log(`✅ Test score added: ${testScore.name} - ${testScore.score} points`, 'success');
+                
+                // Refresh leaderboard
+                setTimeout(() => loadLeaderboard(), 1000);
+                
+            } catch (error) {
+                log(`❌ Failed to add test score: ${error.message}`, 'error');
+            }
+        }
+
+        function showCurrentData() {
+            log('Current localStorage data:', 'info');
+            const stored = localStorage.getItem('khmerWordGameLeaderboard');
+            if (stored) {
+                const data = JSON.parse(stored);
+                log(`📦 Found ${data.length} scores in localStorage`, 'info');
+                data.forEach((score, index) => {
+                    log(`  ${index + 1}. ${score.name}: ${score.score} points`, 'info');
+                });
+            } else {
+                log('📦 No localStorage data found', 'warning');
+            }
+        }
+
+        function checkFirestore() {
+            const url = 'https://console.firebase.google.com/project/khmer-word-game/firestore/data';
+            log('🔗 Opening Firestore Console...', 'info');
+            window.open(url, '_blank');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            log('🚀 Debug panel loaded', 'success');
+            log('Click "Test Firebase Connection" to start', 'info');
+        });
+    </script>
+</body>
+</html>
