@@ -15,7 +15,7 @@ git init
 git remote add origin https://github.com/panhapich7424/khmer-word.git
 ```
 
-## Step 2: Create .gitignore File
+## Step 2: Create .gitignore File   
 
 Create a `.gitignore` file to exclude unnecessary files:
 

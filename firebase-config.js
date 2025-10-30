@@ -45,7 +45,7 @@ class FirestoreService {
                 .orderBy('timestamp', 'desc')
                 .limit(limit)
                 .get();
-            
+
             const scores = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
@@ -55,7 +55,7 @@ class FirestoreService {
                     date: data.timestamp ? data.timestamp.toDate().toLocaleDateString('km-KH') : new Date().toLocaleDateString('km-KH')
                 });
             });
-            
+
             return scores;
         } catch (error) {
             console.error('Error getting scores: ', error);
@@ -70,16 +70,16 @@ class FirestoreService {
                 .orderBy('score', 'desc')
                 .limit(10)
                 .get();
-            
+
             if (snapshot.size < 10) {
                 return true; // Less than 10 scores, so this qualifies
             }
-            
+
             const scores = [];
             snapshot.forEach(doc => {
                 scores.push(doc.data().score);
             });
-            
+
             return score > Math.min(...scores);
         } catch (error) {
             console.error('Error checking top score: ', error);
