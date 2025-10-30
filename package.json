@@ -1,0 +1,18 @@
+{
+  "name": "khmer-word-game",
+  "version": "1.0.0",
+  "description": "A beautiful Khmer word matching game with progressive difficulty",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build needed - static site'",
+    "start": "echo 'Static site - open index.html'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/panhapich7424/khmer-word.git"
+  },
+  "keywords": ["khmer", "game", "word-game", "cambodia", "static-site"],
+  "author": "panhapich7424",
+  "license": "MIT",
+  "homepage": "https://github.com/panhapich7424/khmer-word#readme"
+}

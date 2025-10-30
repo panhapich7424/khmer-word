@@ -12,17 +12,29 @@
 - ✅ Your code is on GitHub: `https://github.com/panhapich7424/khmer-word.git`
 - ✅ Firebase is configured in `firebase-config.js`
 
-## Step 1: Prepare Your Repository
+## Step 1: Fix the Deployment Issue
 
-### 1.1 Create render.yaml (Optional but Recommended)
-This file tells Render how to deploy your site:
+### 1.1 The Problem
+Render detected your project as Node.js and tried to run `yarn build`, but your game is a static site that doesn't need building.
+
+### 1.2 Solution: Update Render Settings
+You need to configure Render to treat this as a static site:
+
+**In Render Dashboard:**
+1. Go to your service settings
+2. **Environment**: Change to `Static Site` (not Node)
+3. **Build Command**: `echo "No build needed"`
+4. **Publish Directory**: `.` (root directory)
+
+### 1.3 Alternative: Use render.yaml
+Create this file to force static site deployment:
 
 ```yaml
 services:
   - type: web
     name: khmer-word-game
     env: static
-    buildCommand: echo "No build needed for static site"
+    buildCommand: ""
     staticPublishPath: .
     routes:
       - type: rewrite
@@ -30,7 +42,7 @@ services:
         destination: /index.html
 ```
 
-### 1.2 Ensure All Files Are Committed
+### 1.4 Ensure All Files Are Committed
 Make sure all your files are pushed to GitHub:
 ```bash
 git add .
@@ -53,9 +65,9 @@ git push origin main
 ### 2.3 Configure Deployment Settings
 - **Name**: `khmer-word-game`
 - **Branch**: `main` (or `master`)
-- **Root Directory**: `.` (leave empty for root)
-- **Build Command**: (leave empty for static site)
-- **Publish Directory**: `.` (leave empty for root)
+- **Root Directory**: (leave empty)
+- **Build Command**: `echo "No build needed"`
+- **Publish Directory**: `.` (or leave empty)
 
 ### 2.4 Deploy
 1. **Click "Create Static Site"**
@@ -145,6 +157,20 @@ Score saved to Firebase successfully
 
 ## Troubleshooting
 
+### Issue: "Couldn't find package.json" or "yarn build" Errors
+**This is your current issue!**
+
+**Solutions**:
+1. **Change service type** in Render dashboard:
+   - Go to Settings → Environment
+   - Change from "Node" to "Static Site"
+   
+2. **Update build settings**:
+   - Build Command: `echo "No build needed"`
+   - Publish Directory: `.`
+   
+3. **Redeploy** after changing settings
+
 ### Issue: Site Not Loading
 **Solution**: Check build logs in Render dashboard
 
@@ -155,7 +181,7 @@ Score saved to Firebase successfully
 3. **Check Firestore rules** allow read/write
 
 ### Issue: 404 Errors
-**Solution**: Add `render.yaml` with rewrite rules (see Step 1.1)
+**Solution**: Add `render.yaml` with rewrite rules
 
 ### Issue: Slow Loading
 **Solution**: Render's CDN should handle this automatically
